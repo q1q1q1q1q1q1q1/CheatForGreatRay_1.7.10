@@ -7,18 +7,9 @@
 
 
 
-HMODULE DllHandle;
-typedef jint(*hJNI_GetCreatedJavaVMs)(JavaVM** vmBuf, jsize bufLen, jsize* nVMs);
+#define getObject(classname) env->FindClass(classname)
 
-hJNI_GetCreatedJavaVMs oJNI_GetCreatedJavaVMs;
-
-HMODULE jvmHandle;
-FARPROC func_JNI_GetCreatedJavaVMs;
-JavaVM *jvm;
-JNIEnv *jenv;
-jobject mc;
-jobject thePlayer;
-jobject theWorld;
+typedef jint(JNICALL* GetCreatedJavaVMs)(JavaVM**, jsize, jsize*);
 
 
 
@@ -34,29 +25,35 @@ void Inject()
 {
 	CreateConsole();
 	std::cout << "Injected" << '\n';
-	jvmHandle = GetModuleHandleA("jvm.dll");
-	func_JNI_GetCreatedJavaVMs = GetProcAddress(jvmHandle, "JNI_GetCreatedJavaVMs");
-	oJNI_GetCreatedJavaVMs = (hJNI_GetCreatedJavaVMs)func_JNI_GetCreatedJavaVMs;
-	jint returnOF = oJNI_GetCreatedJavaVMs(&jvm, 1, NULL);
-	jint returnOf1 = jvm->AttachCurrentThread((void **)&jenv, NULL);
-	std::cout << "returnOf: 1" << returnOf1 << '\n';
-	jstring name = jenv->NewStringUTF("net.minecraft.client.Minecraft");
-	std::cout << "name: " << name << '\n';
-	jclass launch = jenv->FindClass("net/minecraft/launchwrapper/Launch");
-	std::cout << "Launch: " << launch << std::endl;
-	jfieldID sfid = jenv->GetStaticFieldID(launch, "classLoader", "Lnet/minecraft/launchwrapper/LaunchClassLoader;");
-	std::cout << "sfid: " << sfid << std::endl;
-	jobject classLoader = jenv->GetStaticObjectField(launch, sfid);
-	std::cout << "classLoader: " << classLoader << std::endl;
-	//jmethodID mid = jenv->GetMethodID(jenv->GetObjectClass(classLoader), "findClass", "(Ljava/lang/String;)Ljava/lang/Class;");
-	//std::cout << "mid: " << mid << std::endl;
-	//jclass mcClass = (jclass)jenv->CallObjectMethod(classLoader, mid, name);
-	//std::cout << "MCClass: " << mcClass << std::endl;
-	//jmethodID smid = jenv->GetStaticMethodID(mcClass, "getMinecraft", "(Lnet/minecraft/client/Minecraft;)Ljava/lang/String;");
-	//std::cout << "SMID: " << smid << std::endl;
-	jenv->DeleteLocalRef(name);
-	//mc = jenv->CallStaticObjectMethod(mcClass, smid);
-	//std::cout << "mc: " << mc << '\n';
+	HMODULE jvmHandle = GetModuleHandleA("jvm.dll");
+
+	GetCreatedJavaVMs JNI_GetCreatedJavaVMs = (GetCreatedJavaVMs)GetProcAddress(jvmHandle, "JNI_GetCreatedJavaVMs");
+
+	JavaVM* jvm;
+	JNIEnv* env;
+
+	JNI_GetCreatedJavaVMs(&jvm, 1, NULL);
+	jvm->AttachCurrentThread((void**)&env, NULL);
+
+	//Get Minecraft
+	jclass MinecraftClass = env->FindClass("bao");
+	std::cout << "MinecraftClass: " << MinecraftClass << '\n';
+	jmethodID GetMinecraft = env->GetStaticMethodID(MinecraftClass, "getMinecraft", "()Lnet/minecraft/client/Minecraft;");
+	std::cout << "GetMinecraft: " << GetMinecraft << '\n';
+	jobject Minecraft = env->CallStaticObjectMethod(MinecraftClass, GetMinecraft);
+	std::cout << "Minecraft: " << Minecraft << '\n';
+
+
+	//Get Player
+	//jobject localPlayer = env->GetObjectField(Minecraft, env->GetFieldID(MinecraftClass, "s", "Ldze;"));
+	env->DeleteLocalRef(MinecraftClass);
+	env->DeleteLocalRef(Minecraft);
+
+	//Set player rotation to 10
+	//jclass CEntityPlayerSP = env->GetObjectClass(localPlayer);
+	//env->SetFloatField(localPlayer, env->GetFieldID(CEntityPlayerSP, "bY", "F"), 10);
+	//env->DeleteLocalRef(localPlayer);
+	//env->DeleteLocalRef(CEntityPlayerSP);
 
 }
 
@@ -68,7 +65,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD  ul_reason_for_call, LPVOID lpReser
 	switch (ul_reason_for_call)
 	{
 	case DLL_PROCESS_ATTACH:
-		DllHandle = hModule;
+		
 		Inject();
 
 
