@@ -34,11 +34,13 @@ void Inject()
 
 	JNI_GetCreatedJavaVMs(&jvm, 1, NULL);
 	jvm->AttachCurrentThread((void**)&env, NULL);
+	std::cout << "jvm: " << jvm << '\n';
+	std::cout << "env: " << env << '\n';
 
 	//Get Minecraft
 	jclass MinecraftClass = env->FindClass("bao");
 	std::cout << "MinecraftClass: " << MinecraftClass << '\n';
-	jmethodID GetMinecraft = env->GetStaticMethodID(MinecraftClass, "getMinecraft", "()Lnet/minecraft/client/Minecraft;");
+	jmethodID GetMinecraft = env->GetStaticMethodID(MinecraftClass, "func_71410_x", "()Lbao;");
 	std::cout << "GetMinecraft: " << GetMinecraft << '\n';
 	jobject Minecraft = env->CallStaticObjectMethod(MinecraftClass, GetMinecraft);
 	std::cout << "Minecraft: " << Minecraft << '\n';
