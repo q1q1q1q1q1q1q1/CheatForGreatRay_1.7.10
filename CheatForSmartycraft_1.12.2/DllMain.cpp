@@ -19,6 +19,21 @@ JNIEnv *jenv;
 jobject entityObject;
 jclass Entity;
 
+jobject mc;
+jobject thePlayer;
+jobject theWorld;
+jobject renderViewEntity;
+jobject pointedEntity;
+jobject boundingBox;
+jobject hitVec;
+jobject ridingEntity;
+
+jdouble xCoord;
+jdouble yCoord;
+jdouble zCoord;
+
+jfieldID thePlayerf;
+
 void CreateConsole()
 {
 	AllocConsole();
@@ -49,29 +64,39 @@ jclass getObject(JNIEnv* env, const char* className)
 	env->DeleteLocalRef(name);
 }
 
+jobject getMC(JNIEnv* env)
+{
+	jclass mcClass = getObject(env, "net.minecraft.client.Minecraft");
+	std::cout << "MCClass: " << mcClass << std::endl;
+	jmethodID smid = env->GetStaticMethodID(mcClass, "func_71410_x", "()Lnet/minecraft/client/Minecraft;");
+	std::cout << "SMID: " << smid << std::endl;
+	return env->CallStaticObjectMethod(mcClass, smid);
+}
+
+jobject getPlayer(JNIEnv* env)
+{
+	thePlayerf = env->GetFieldID(env->GetObjectClass(mc), "field_71439_g", "Lnet/minecraft/client/entity/EntityClientPlayerMP;");
+	return env->GetObjectField(mc, thePlayerf);
+}
+
+
+void sendChatMessage(JNIEnv* env, char* message)
+{
+	jmethodID chatFuncID = env->GetMethodID(env->GetObjectClass(thePlayer), "func_71165_d", "(Ljava/lang/String;)V");
+	env->CallObjectMethod(thePlayer, chatFuncID, env->NewStringUTF(message));
+}
+
 
 void postPreInit(JNIEnv* env) 
 {
-	jclass MinecraftClass = getObject(env, "net.minecraft.client.Minecraft");
-	std::cout << "MinecraftClass: " << MinecraftClass << std::endl;
+	mc = getMC(env);
+	mc = env->NewGlobalRef(mc);
+	thePlayer = getPlayer(env);
+	thePlayer = env->NewGlobalRef(thePlayer);
 
-	jmethodID GetMinecraft = env->GetStaticMethodID(MinecraftClass, "func_71410_x", "()Lnet/minecraft/client/Minecraft;");
-	std::cout << "GetMinecraft: " << GetMinecraft << std::endl;
-
-	jobject Minecraft = env->CallStaticObjectMethod(MinecraftClass, GetMinecraft);
-	std::cout << "Minecraft: " << Minecraft << std::endl;
-
-	jobject pointedEntity = env->GetObjectField(Minecraft, env->GetFieldID(env->GetObjectClass(Minecraft), "field_147125_j", "j"));
-	std::cout << "pointedEntity: " << pointedEntity << std::endl;
 	
-
-
-	//jclass entityClass = env->GetObjectClass(pointedEntity);
-	//std::cout << "entityClass: " << entityClass << std::endl;
-
-	//jmethodID setSprinting = env->GetMethodID(env->GetObjectClass(pointedEntity), "func_70031_b", "(Z)V");
-	//std::cout << "setSprinting: " << setSprinting << std::endl;
-
+	
+	
 
 }
 
