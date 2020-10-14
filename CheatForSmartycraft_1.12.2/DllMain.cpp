@@ -28,6 +28,9 @@ jobject boundingBox;
 jobject hitVec;
 jobject ridingEntity;
 
+jfieldID pointedEntityF;
+
+
 jdouble xCoord;
 jdouble yCoord;
 jdouble zCoord;
@@ -79,13 +82,28 @@ jobject getPlayer(JNIEnv* env)
 	return env->GetObjectField(mc, thePlayerf);
 }
 
+jobject getPointedEntity(JNIEnv* env)
+{
+	pointedEntityF = env->GetFieldID(env->GetObjectClass(mc), "field_147125_j", "Lnet/minecraft/entity/Entity;");
+	std::cout << "pointedEntityF: " << pointedEntityF << std::endl;
+	return env->GetObjectField(mc, thePlayerf);
+}
 
-void sendChatMessage(JNIEnv* env, char* message)
+void sendChatMessage(JNIEnv* env, const char* message)
 {
 	jmethodID chatFuncID = env->GetMethodID(env->GetObjectClass(thePlayer), "func_71165_d", "(Ljava/lang/String;)V");
+	std::cout << "chatFuncID: " << chatFuncID << std::endl;
+
 	env->CallObjectMethod(thePlayer, chatFuncID, env->NewStringUTF(message));
 }
 
+void setSprinting(JNIEnv* env, bool sprinting)
+{
+	jclass EntityClass = env->GetObjectClass(thePlayer);
+	jmethodID sprintFuncID = env->GetMethodID(EntityClass, "func_70031_b", "(Z)V");
+	env->CallObjectMethod(pointedEntity, sprintFuncID, sprinting);
+
+}
 
 void postPreInit(JNIEnv* env) 
 {
@@ -93,10 +111,9 @@ void postPreInit(JNIEnv* env)
 	mc = env->NewGlobalRef(mc);
 	thePlayer = getPlayer(env);
 	thePlayer = env->NewGlobalRef(thePlayer);
+	pointedEntity = getPointedEntity(env);
+	pointedEntity = env->NewGlobalRef(pointedEntity);
 
-	
-	
-	
 
 }
 
@@ -114,17 +131,12 @@ DWORD WINAPI Inject(LPVOID lpParam)
 	
 
 
-
+	postPreInit(jenv);
 
 	while (true) {
 		if (GetAsyncKeyState(VK_F4) & 1)
 		{
-			if (jenv != nullptr) {
-				postPreInit(jenv);
-			}
-			else {
-				std::cout << "jenv NULL" << std::endl;
-			}
+		
 
 		}
 		if (GetAsyncKeyState(VK_DELETE) & 1)
