@@ -105,6 +105,13 @@ void setSprinting(JNIEnv* env, bool sprinting)
 
 }
 
+BOOL IsSprinting(JNIEnv* env)
+{
+	jclass EntityClass = env->GetObjectClass(thePlayer);
+	jmethodID sprintFuncID = env->GetMethodID(EntityClass, "func_70051_ag", "()Z");
+	return env->CallBooleanMethod(pointedEntity, sprintFuncID);
+}
+
 void postPreInit(JNIEnv* env) 
 {
 	mc = getMC(env);
@@ -113,7 +120,6 @@ void postPreInit(JNIEnv* env)
 	thePlayer = env->NewGlobalRef(thePlayer);
 	pointedEntity = getPointedEntity(env);
 	pointedEntity = env->NewGlobalRef(pointedEntity);
-
 
 }
 
@@ -131,12 +137,11 @@ DWORD WINAPI Inject(LPVOID lpParam)
 	
 
 
-	postPreInit(jenv);
 
 	while (true) {
 		if (GetAsyncKeyState(VK_F4) & 1)
 		{
-		
+			postPreInit(jenv);
 
 		}
 		if (GetAsyncKeyState(VK_DELETE) & 1)
