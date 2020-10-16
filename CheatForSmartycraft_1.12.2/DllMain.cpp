@@ -62,7 +62,6 @@ jclass getObject(JNIEnv* env, const char* className)
 	jobject classLoader = getClassLoader(env);
 	jmethodID mid = env->GetMethodID(env->GetObjectClass(classLoader), "findClass", "(Ljava/lang/String;)Ljava/lang/Class;");
 	std::cout << "mid: " << mid << std::endl;
-
 	return (jclass)env->CallObjectMethod(classLoader, mid, name);
 	env->DeleteLocalRef(name);
 }
@@ -102,7 +101,6 @@ void setSprinting(JNIEnv* env, bool sprinting)
 	jclass EntityClass = env->GetObjectClass(thePlayer);
 	jmethodID sprintFuncID = env->GetMethodID(EntityClass, "func_70031_b", "(Z)V");
 	env->CallObjectMethod(pointedEntity, sprintFuncID, sprinting);
-
 }
 
 BOOL IsSprinting(JNIEnv* env)
@@ -110,6 +108,14 @@ BOOL IsSprinting(JNIEnv* env)
 	jclass EntityClass = env->GetObjectClass(thePlayer);
 	jmethodID sprintFuncID = env->GetMethodID(EntityClass, "func_70051_ag", "()Z");
 	return env->CallBooleanMethod(pointedEntity, sprintFuncID);
+}
+
+void setStepHeight(JNIEnv* env, float stepHeight)// GetFieldID return NULL
+{
+	jclass EntityClass = env->GetObjectClass(thePlayer);
+	jfieldID stepHeightID = env->GetFieldID(EntityClass, "field_70138_W", "W");
+	std::cout << "stepHeightID: " << stepHeightID << std::endl;
+	env->SetFloatField(pointedEntity, stepHeightID, stepHeight);
 }
 
 void postPreInit(JNIEnv* env) 
@@ -120,6 +126,7 @@ void postPreInit(JNIEnv* env)
 	thePlayer = env->NewGlobalRef(thePlayer);
 	pointedEntity = getPointedEntity(env);
 	pointedEntity = env->NewGlobalRef(pointedEntity);
+	//setStepHeight(env, 10);
 
 }
 
@@ -134,8 +141,6 @@ DWORD WINAPI Inject(LPVOID lpParam)
 	oJNI_GetCreatedJavaVMs = (hJNI_GetCreatedJavaVMs)func_JNI_GetCreatedJavaVMs;
 	jint returnOF = oJNI_GetCreatedJavaVMs(&jvm, 1, NULL);
 	jint returnOf1 = jvm->AttachCurrentThread((void **)&jenv, NULL);
-	
-
 
 
 	while (true) {
